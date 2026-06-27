@@ -1,0 +1,27 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+norecursedirs = [".git", ".venv"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+src = ["custom_components"]
+extend-exclude = ["custom_components/talos_linux/proto"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "PL"]
+ignore = ["PLR0913", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLR2004", "S101"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+exclude = ["custom_components/talos_linux/proto", "tests"]
+
+[tool.coverage.run]
+source = ["custom_components/talos_linux"]
+omit = ["custom_components/talos_linux/proto/*"]

@@ -1,0 +1,120 @@
+refresh:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+
+get_service_status:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+
+reboot_node:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    confirm_node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    mode:
+      default: DEFAULT
+      selector:
+        select:
+          options: [DEFAULT, POWERCYCLE, FORCE]
+
+upgrade_node:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    confirm_node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    version:
+      example: v1.13.5
+      selector:
+        text:
+
+apply_config:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    confirm_node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    config:
+      required: true
+      selector:
+        text:
+          multiline: true
+    mode:
+      default: STAGED
+      selector:
+        select:
+          options: [REBOOT, AUTO, NO_REBOOT, STAGED, TRY]
+
+reset_node:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    confirm_node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    graceful:
+      default: true
+      selector:
+        boolean:
+    mode:
+      default: SYSTEM_DISK
+      selector:
+        select:
+          options: [ALL, SYSTEM_DISK, USER_DISKS]

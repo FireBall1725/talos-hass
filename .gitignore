@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Tooling scratch
+/.proto-src/
+*.log
+
+# Local-only design notes (kept on disk, not published)
+/SPEC.md
+
+# OS
+.DS_Store

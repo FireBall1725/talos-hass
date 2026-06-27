@@ -1,0 +1,193 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Talos",
+        "description": "Paste your talosconfig. The connection endpoint is read from it, and apid discovers the rest of the cluster.",
+        "data": {
+          "endpoint": "Endpoint override (optional; defaults to the talosconfig)",
+          "port": "apid port",
+          "talosconfig": "talosconfig (paste the full file)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Talos",
+        "description": "The certificate expired or rotated. Paste a current talosconfig for the same cluster.",
+        "data": {
+          "endpoint": "Endpoint override (optional; defaults to the talosconfig)",
+          "port": "apid port",
+          "talosconfig": "talosconfig (paste the full file)"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Talos",
+        "data": {
+          "endpoint": "Endpoint override (optional; defaults to the talosconfig)",
+          "port": "apid port",
+          "talosconfig": "talosconfig (paste the full file)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach apid at that endpoint and port.",
+      "invalid_auth": "The certificate was rejected, or its role is not allowed.",
+      "invalid_config": "The talosconfig could not be parsed.",
+      "missing_dependency": "A required Python dependency is missing.",
+      "unknown": "Unexpected error talking to Talos."
+    },
+    "abort": {
+      "already_configured": "This cluster is already configured.",
+      "wrong_cluster": "That talosconfig is for a different cluster.",
+      "reauth_successful": "Re-authentication succeeded.",
+      "reconfigure_successful": "Reconfiguration succeeded."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Talos options",
+        "data": {
+          "state_interval": "Node poll interval (seconds)",
+          "upgrade_check_interval": "Upgrade-check interval (seconds)",
+          "upgrade_target_mode": "Upgrade target",
+          "pinned_version": "Pinned target version (e.g. v1.13.5)",
+          "allow_destructive": "Allow destructive operations (reboot, upgrade, apply config)",
+          "allow_reset": "Allow node reset/wipe"
+        },
+        "data_description": {
+          "allow_reset": "Separate gate for the one action that destroys a node. Leave off unless you mean it."
+        }
+      }
+    }
+  },
+  "selector": {
+    "upgrade_mode": {
+      "options": {
+        "latest_stable": "Latest stable release",
+        "pinned": "Pinned version"
+      }
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Refresh",
+      "description": "Force an immediate poll of the cluster.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster to refresh."
+        }
+      }
+    },
+    "get_service_status": {
+      "name": "Get service status",
+      "description": "Return the Talos service health for a node.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to query."
+        }
+      }
+    },
+    "reboot_node": {
+      "name": "Reboot node",
+      "description": "Reboot a single Talos node. Requires destructive operations to be enabled.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to reboot."
+        },
+        "confirm_node": {
+          "name": "Confirm node",
+          "description": "Repeat the node address to confirm."
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Reboot mode."
+        }
+      }
+    },
+    "upgrade_node": {
+      "name": "Upgrade node",
+      "description": "Upgrade a node's Talos version, preserving its schematic. Requires destructive operations to be enabled.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to upgrade."
+        },
+        "confirm_node": {
+          "name": "Confirm node",
+          "description": "Repeat the node address to confirm."
+        },
+        "version": {
+          "name": "Version",
+          "description": "Target Talos version. Defaults to the configured upgrade target."
+        }
+      }
+    },
+    "apply_config": {
+      "name": "Apply machine config",
+      "description": "Apply a Talos machine configuration to a node. Requires destructive operations to be enabled.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to apply to."
+        },
+        "confirm_node": {
+          "name": "Confirm node",
+          "description": "Repeat the node address to confirm."
+        },
+        "config": {
+          "name": "Machine config",
+          "description": "The machine configuration YAML to apply."
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Apply mode. STAGED applies on next reboot."
+        }
+      }
+    },
+    "reset_node": {
+      "name": "Reset node",
+      "description": "Wipe and reset a node. Requires node reset to be enabled. This is destructive.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to reset."
+        },
+        "confirm_node": {
+          "name": "Confirm node",
+          "description": "Repeat the node address to confirm."
+        },
+        "graceful": {
+          "name": "Graceful",
+          "description": "Cordon and drain before resetting."
+        },
+        "mode": {
+          "name": "Wipe mode",
+          "description": "Which disks to wipe."
+        }
+      }
+    }
+  }
+}

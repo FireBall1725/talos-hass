@@ -1,0 +1,7 @@
+pytest-homeassistant-custom-component
+pytest-cov
+grpclib>=0.4.9
+protobuf>=6.31.1,<7
+googleapis-common-protos>=1.63.0
+ruff
+mypy
