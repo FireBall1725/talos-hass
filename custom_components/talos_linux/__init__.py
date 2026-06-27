@@ -13,6 +13,7 @@ from homeassistant.helpers.device_registry import DeviceEntry
 from .client import TalosClient, TalosDependencyError
 from .const import CONF_ENDPOINT, CONF_PORT, CONF_TALOSCONFIG, DOMAIN
 from .coordinator import TalosCoordinator
+from .panel import async_register_panel, async_unregister_panel
 from .services import async_setup_services, async_unload_services
 from .talosconfig import TalosConfigError, parse_talosconfig
 
@@ -55,6 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TalosConfigEntry) -> boo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload))
     async_setup_services(hass)
+    await async_register_panel(hass)
     return True
 
 
@@ -70,6 +72,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: TalosConfigEntry) -> bo
         ]
         if not others:
             async_unload_services(hass)
+            async_unregister_panel(hass)
     return unloaded
 
 

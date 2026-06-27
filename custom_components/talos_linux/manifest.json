@@ -1,6 +1,7 @@
 {
   "domain": "talos_linux",
   "name": "Talos Linux",
+  "after_dependencies": ["http", "frontend", "panel_custom", "websocket_api"],
   "codeowners": ["@FireBall1725"],
   "config_flow": true,
   "documentation": "https://github.com/fireball1725/talos-hass",
@@ -8,5 +9,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/fireball1725/talos-hass/issues",
   "requirements": ["grpclib>=0.4.9", "protobuf>=6.31.1,<7", "googleapis-common-protos>=1.63.0"],
-  "version": "0.1.3"
+  "version": "0.1.4"
 }

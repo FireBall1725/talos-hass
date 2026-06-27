@@ -56,6 +56,7 @@ class NodeData:
     arch: str | None = None
     platform: str | None = None
     memory_used_pct: float | None = None
+    memory_total: int | None = None
     cpu_pct: float | None = None
     disk_used_pct: float | None = None
     boot_time: int | None = None
@@ -212,6 +213,7 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
         )
 
         if not isinstance(memory, Exception) and memory["total"]:
+            data.memory_total = memory["total"]
             used = memory["total"] - memory["available"]
             data.memory_used_pct = round(used / memory["total"] * 100, 1)
 
