@@ -75,6 +75,7 @@ class TalosData:
     nodes: dict[str, NodeData]
     latest_version: str | None = None
     target_version: str | None = None
+    cert_expires: datetime | None = None
 
 
 def _interval(entry: ConfigEntry, key: str, default: timedelta) -> timedelta:
@@ -146,6 +147,7 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
             nodes=node_map,
             latest_version=latest,
             target_version=self._target_version(latest),
+            cert_expires=self.creds.not_after,
         )
 
     async def _discover_nodes(self) -> list[dict[str, Any]]:

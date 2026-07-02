@@ -61,7 +61,7 @@ class TalosNodeSensorDescription(SensorEntityDescription):
 class TalosClusterSensorDescription(SensorEntityDescription):
     """A cluster sensor with a value function over TalosData."""
 
-    value_fn: Callable[[TalosData], StateType]
+    value_fn: Callable[[TalosData], StateType | datetime]
 
 
 NODE_SENSORS: tuple[TalosNodeSensorDescription, ...] = (
@@ -167,6 +167,13 @@ CLUSTER_SENSORS: tuple[TalosClusterSensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.latest_version,
     ),
+    TalosClusterSensorDescription(
+        key="cert_expires",
+        name="Client certificate expiry",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.cert_expires,
+    ),
 )
 
 
@@ -218,5 +225,5 @@ class TalosClusterSensor(TalosClusterEntity, SensorEntity):
         self.entity_description = description
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> StateType | datetime:
         return self.entity_description.value_fn(self.coordinator.data)

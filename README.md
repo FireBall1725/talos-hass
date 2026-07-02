@@ -8,7 +8,9 @@
 
 A Home Assistant integration that surfaces Talos Linux cluster state: node OS versions, available upgrades, machine stage, system extensions, etcd health, and per-node metrics. It talks to the Talos API (`apid`) directly over mTLS, so it sees the Talos-native data that the generic `kubernetes` integration can't reach.
 
-> **Status: pre-release (0.1.0), under active development.** Not yet published to the HACS default store. Expect breaking changes until 1.0.
+![The Talos panel in Home Assistant, listing every node with per-node version, stage, metrics, extensions, and services](images/talos-panel.png)
+
+> **Status: pre-release (0.1.5), under active development.** Not yet published to the HACS default store. Expect breaking changes until 1.0.
 
 ## Why this exists
 
@@ -20,7 +22,7 @@ The headline feature is a per-node `update` entity that knows each node's schema
 
 - A Talos Linux cluster reachable on `apid` port 50000.
 - A `talosconfig` with at least the `os:reader` role. Write actions (reboot, upgrade, apply config, reset) need `os:operator` or `os:admin`.
-- 64-bit Home Assistant (amd64 or aarch64). The integration depends on `grpcio`, which ships prebuilt wheels for 64-bit glibc and musl. 32-bit ARM (armv7) has no wheel and is not supported.
+- The Talos client is pure Python (`grpclib` over the stdlib `ssl` module), chosen because `grpcio`'s bundled BoringSSL can't negotiate the Ed25519 mTLS a Talos PKI uses by default. No architecture-specific wheels are needed for the client itself.
 
 ## Install (HACS custom repository)
 
@@ -46,7 +48,7 @@ Options (set after setup):
 
 ## Entities
 
-One device per Talos node, plus a cluster device. Per node: Talos version, Kubernetes version, kernel version, machine stage, CPU/memory/disk usage, uptime, schematic ID, extension count, and an `update` entity. Binary sensors cover node ready, etcd member health, reboot pending, and Secure Boot. The cluster device carries version-spread, etcd quorum, node counts, and (planned) certificate expiry.
+One device per Talos node, plus a cluster device. Per node: Talos version, Kubernetes version, kernel version, machine stage, CPU/memory/disk usage, uptime, schematic ID, extension count, and an `update` entity. Binary sensors cover node ready, etcd member health, reboot pending, and Secure Boot. The cluster device carries version-spread, etcd quorum, node counts, and a client-certificate expiry timestamp (the talosconfig cert that authenticates the integration; watch it so the credential doesn't lapse and lock you out).
 
 ## Services and safety
 

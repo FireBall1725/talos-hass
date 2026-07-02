@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 from custom_components.talos_linux.talosconfig import (
     TalosConfigError,
@@ -17,6 +19,13 @@ def test_admin_roles() -> None:
     assert creds.endpoints == ["192.0.2.10"]
     assert creds.can_write
     assert creds.can_reset
+
+
+def test_cert_expiry_parsed() -> None:
+    """The client cert's notAfter is read as a timezone-aware UTC datetime."""
+    creds = parse_talosconfig(make_talosconfig("os:admin"))
+    # conftest builds the cert with not_valid_after 2030-01-01.
+    assert creds.not_after == datetime(2030, 1, 1, tzinfo=UTC)
 
 
 def test_reader_roles() -> None:

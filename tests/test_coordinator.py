@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 from custom_components.talos_linux.client import TalosAuthError, TalosConnectionError
 
@@ -25,6 +27,8 @@ async def test_node_data(hass, init_integration, admin_talosconfig) -> None:
     # First cycle has no previous CPU sample.
     assert node.cpu_pct is None
     assert coordinator.data.target_version == "v1.13.5"
+    # Client-cert expiry comes off the talosconfig cert (conftest: 2030-01-01).
+    assert coordinator.data.cert_expires == datetime(2030, 1, 1, tzinfo=UTC)
 
 
 async def test_cpu_percent_after_second_cycle(

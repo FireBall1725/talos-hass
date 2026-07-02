@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import binascii
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import yaml
 from cryptography import x509
@@ -33,6 +34,7 @@ class TalosCredentials:
     crt_pem: bytes
     key_pem: bytes
     roles: frozenset[str] = field(default_factory=frozenset)
+    not_after: datetime | None = None
 
     @property
     def can_write(self) -> bool:
@@ -66,16 +68,25 @@ def _normalize_key_pem(pem: bytes) -> bytes:
     return pem.replace(b"ED25519 PRIVATE KEY", b"PRIVATE KEY")
 
 
-def extract_roles(crt_pem: bytes) -> frozenset[str]:
-    """Read Talos RBAC roles from the client cert's Subject O attributes."""
+def _load_cert(crt_pem: bytes) -> x509.Certificate:
+    """Parse the client cert PEM, or raise TalosConfigError."""
     try:
-        cert = x509.load_pem_x509_certificate(crt_pem)
+        return x509.load_pem_x509_certificate(crt_pem)
     except ValueError as err:
         raise TalosConfigError("client certificate is not valid PEM") from err
+
+
+def _roles_from_cert(cert: x509.Certificate) -> frozenset[str]:
+    """Talos RBAC roles carried in the cert's Subject O attributes."""
     orgs = cert.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)
     return frozenset(
         attr.value for attr in orgs if isinstance(attr.value, str) and attr.value
     )
+
+
+def extract_roles(crt_pem: bytes) -> frozenset[str]:
+    """Read Talos RBAC roles from the client cert's Subject O attributes."""
+    return _roles_from_cert(_load_cert(crt_pem))
 
 
 def credentials_from_fields(
@@ -83,12 +94,14 @@ def credentials_from_fields(
 ) -> TalosCredentials:
     """Build credentials from already-separated base64 ca/crt/key fields."""
     crt = _decode_b64(crt_b64, "crt")
+    cert = _load_cert(crt)
     return TalosCredentials(
         endpoints=list(endpoints),
         ca_pem=_decode_b64(ca_b64, "ca"),
         crt_pem=crt,
         key_pem=_normalize_key_pem(_decode_b64(key_b64, "key")),
-        roles=extract_roles(crt),
+        roles=_roles_from_cert(cert),
+        not_after=cert.not_valid_after_utc,
     )
 
 
