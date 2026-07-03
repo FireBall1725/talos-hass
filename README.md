@@ -48,7 +48,7 @@ Options (set after setup):
 
 ## Entities
 
-One device per Talos node, plus a cluster device. Per node: Talos version, Kubernetes version, kernel version, machine stage, CPU/memory/disk usage, uptime, schematic ID, extension count, and an `update` entity. Binary sensors cover node ready, etcd member health, reboot pending, and Secure Boot. The cluster device carries version-spread, etcd quorum, node counts, and a client-certificate expiry timestamp (the talosconfig cert that authenticates the integration; watch it so the credential doesn't lapse and lock you out).
+One device per Talos node, plus a cluster device. Per node: Talos version, machine stage, CPU, memory, and disk usage, last boot, schematic ID, extension count, architecture, and platform, plus an `update` entity. Two binary sensors per node: reachable and ready. The cluster device carries node count, control-plane count, Talos version spread, the latest Talos release on offer, and a client-certificate expiry timestamp (the talosconfig cert that authenticates the integration; watch it so the credential doesn't lapse and lock you out). etcd members and per-service health show in the Talos panel rather than as entities.
 
 ## Services and safety
 
