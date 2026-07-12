@@ -71,19 +71,7 @@
   "entity": {
     "sensor": {
       "version": { "name": "Talos version" },
-      "stage": {
-        "name": "Machine stage",
-        "state": {
-          "booting": "Booting",
-          "installing": "Installing",
-          "maintenance": "Maintenance",
-          "running": "Running",
-          "rebooting": "Rebooting",
-          "shuttingDown": "Shutting down",
-          "resetting": "Resetting",
-          "upgrading": "Upgrading"
-        }
-      },
+      "stage": { "name": "Machine stage" },
       "cpu": { "name": "CPU usage" },
       "memory": { "name": "Memory usage" },
       "disk": { "name": "System disk usage" },
