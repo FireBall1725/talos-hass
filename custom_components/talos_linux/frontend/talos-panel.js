@@ -91,14 +91,17 @@ function row(node, key, expanded) {
       : `<span class="badge notready">Not Ready</span>`;
   return `<div class="node ${expanded ? "open" : ""}" data-key="${esc(key)}">
     <div class="node-head" data-toggle="${esc(key)}">
-      <span class="chev">${expanded ? "▾" : "▸"}</span>
-      <span class="name">${esc(node.hostname || node.address)}</span>
-      <span class="spacer"></span>
-      ${badge}
-      <span class="ip mono">${esc(node.address)}</span>
-      ${meter("CPU", node.cpu_pct)}
-      ${meter("MEM", node.memory_used_pct)}
-      <span class="uptime">${fmtUptime(node.boot_time)}</span>
+      <div class="nh-top">
+        <span class="chev">${expanded ? "▾" : "▸"}</span>
+        <span class="name">${esc(node.hostname || node.address)}</span>
+        ${badge}
+      </div>
+      <div class="nh-meta">
+        <span class="ip mono">${esc(node.address)}</span>
+        ${meter("CPU", node.cpu_pct)}
+        ${meter("MEM", node.memory_used_pct)}
+        <span class="uptime">${fmtUptime(node.boot_time)}</span>
+      </div>
     </div>
     ${expanded ? detail(node) : ""}
   </div>`;
@@ -136,9 +139,11 @@ const STYLE = `
   .node.open { border-color:var(--primary-color); }
   .node-head { display:flex; align-items:center; gap:14px; padding:14px 16px; cursor:pointer; }
   .node-head:hover { background:var(--secondary-background-color, rgba(255,255,255,0.03)); }
-  .chev { color:var(--secondary-text-color); width:12px; }
-  .name { font-weight:600; }
-  .spacer { flex:1; }
+  .nh-top { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
+  .nh-top .badge { margin-left:auto; }
+  .nh-meta { display:flex; align-items:center; gap:14px; }
+  .chev { color:var(--secondary-text-color); width:12px; flex:none; }
+  .name { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .badge { font-size:12px; padding:2px 10px; border-radius:12px; }
   .badge.ready { color:#1f8a4c; background:rgba(31,138,76,0.18); }
   .badge.notready { color:#c0392b; background:rgba(192,57,43,0.18); }
@@ -165,18 +170,17 @@ const STYLE = `
   .chip.bad { border-color:rgba(192,57,43,0.6); color:#e07a6f; }
   .empty { color:var(--secondary-text-color); padding:40px; text-align:center; }
 
-  /* Narrow / mobile: the node row is too wide for a phone, so let it wrap and
-     drop the fixed indents. HA sets [narrow] on the host when the sidebar is
-     collapsed on a small screen. A width query backs it up for a docked-but-
-     small viewport. */
+  /* Narrow / mobile: stack each node row into a fixed two-part layout so every
+     node reads the same — name + status on top, then IP/CPU/MEM/uptime below —
+     instead of free-wrapping at different points per row. HA sets [narrow] on
+     the host when the sidebar is collapsed; a width query backs it up. */
   @media (max-width: 600px) {
     .wrap { padding:12px; }
     .controls { gap:8px; }
     input.search { flex:1 1 100%; min-width:0; }
     .count { margin-left:0; }
-    .node-head { flex-wrap:wrap; gap:8px 10px; padding:12px; }
-    .node-head .spacer { display:none; }
-    .name { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .node-head { flex-direction:column; align-items:stretch; gap:8px; padding:12px; }
+    .nh-meta { width:100%; flex-wrap:wrap; gap:8px 12px; }
     .ip { min-width:0; }
     .track { width:60px; }
     .detail { padding:6px 12px 16px; }
