@@ -26,7 +26,8 @@ def _version() -> str:
     Appending ?v=<version> makes every release a fresh URL.
     """
     try:
-        return json.loads((Path(__file__).parent / "manifest.json").read_text())["version"]
+        raw = (Path(__file__).parent / "manifest.json").read_text()
+        return json.loads(raw)["version"]
     except Exception:  # noqa: BLE001
         return "0"
 
