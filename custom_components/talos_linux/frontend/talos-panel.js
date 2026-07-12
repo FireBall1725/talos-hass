@@ -105,12 +105,25 @@ function row(node, key, expanded) {
 }
 
 const STYLE = `
-  :host { display:block; }
+  :host { display:flex; flex-direction:column; height:100%; box-sizing:border-box;
+    background:var(--primary-background-color); color:var(--primary-text-color);
+    font-family:var(--paper-font-body1_-_font-family, sans-serif); }
+  * { box-sizing:border-box; }
+  .topbar { display:flex; align-items:center; gap:8px; flex:none;
+    height:var(--header-height,56px); padding:0 16px;
+    background:var(--app-header-background-color, var(--primary-color));
+    color:var(--app-header-text-color, var(--text-primary-color, #fff)); }
+  .menu-btn { display:none; align-items:center; justify-content:center;
+    cursor:pointer; margin-right:8px; --mdc-icon-size:24px; color:inherit; }
+  :host([narrow]) .menu-btn { display:flex; }
+  .topbar-title { margin:0; flex:1; font-size:20px; font-weight:400; }
+  .content { flex:1; overflow-y:auto; overflow-x:hidden; }
   .wrap { padding:16px 24px; max-width:1600px; margin:0 auto;
     color:var(--primary-text-color); font-family:var(--paper-font-body1_-_font-family, sans-serif); }
   .controls { display:flex; gap:12px; align-items:center; margin:8px 0 16px; flex-wrap:wrap; }
   input.search { background:var(--card-background-color,#1c1c1c); color:var(--primary-text-color);
-    border:1px solid var(--divider-color,#333); border-radius:8px; padding:8px 12px; min-width:240px; outline:none; }
+    border:1px solid var(--divider-color,#333); border-radius:8px; padding:8px 12px; min-width:240px; outline:none;
+    max-width:100%; }
   .filters { display:flex; gap:8px; }
   .filters button { background:transparent; color:var(--secondary-text-color); border:1px solid var(--divider-color,#333);
     border-radius:16px; padding:5px 14px; cursor:pointer; }
@@ -150,6 +163,24 @@ const STYLE = `
   .chip.ok { border-color:rgba(31,138,76,0.5); }
   .chip.bad { border-color:rgba(192,57,43,0.6); color:#e07a6f; }
   .empty { color:var(--secondary-text-color); padding:40px; text-align:center; }
+
+  /* Narrow / mobile: the node row is too wide for a phone, so let it wrap and
+     drop the fixed indents. HA sets [narrow] on the host when the sidebar is
+     collapsed on a small screen. A width query backs it up for a docked-but-
+     small viewport. */
+  @media (max-width: 600px) {
+    .wrap { padding:12px; }
+    .controls { gap:8px; }
+    input.search { flex:1 1 100%; min-width:0; }
+    .count { margin-left:0; }
+    .node-head { flex-wrap:wrap; gap:8px 10px; padding:12px; }
+    .node-head .spacer { display:none; }
+    .name { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ip { min-width:0; }
+    .track { width:60px; }
+    .detail { padding:6px 12px 16px; }
+    .grid { grid-template-columns:1fr; gap:12px; }
+  }
 `;
 
 class TalosLinuxPanel extends HTMLElement {
@@ -168,9 +199,19 @@ class TalosLinuxPanel extends HTMLElement {
     if (first) this._fetch();
   }
 
+  set narrow(v) {
+    // Reflect to a host attribute; CSS shows the menu button only when narrow.
+    this.toggleAttribute("narrow", !!v);
+  }
+
   connectedCallback() {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
+      <div class="topbar">
+        <div class="menu-btn" title="Open menu"><ha-icon icon="mdi:menu"></ha-icon></div>
+        <h1 class="topbar-title">Talos</h1>
+      </div>
+      <div class="content">
       <div class="wrap">
         <div class="controls">
           <input class="search" type="text" placeholder="Search nodes…" />
@@ -182,8 +223,14 @@ class TalosLinuxPanel extends HTMLElement {
           <span class="count"></span>
         </div>
         <div class="list"></div>
+      </div>
       </div>`;
 
+    this.shadowRoot.querySelector(".menu-btn").addEventListener("click", () =>
+      this.dispatchEvent(
+        new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true })
+      )
+    );
     this.shadowRoot.querySelector(".search").addEventListener("input", (e) => {
       this._search = e.target.value.toLowerCase();
       this._renderList();
@@ -266,4 +313,6 @@ class TalosLinuxPanel extends HTMLElement {
   }
 }
 
-customElements.define("talos-linux-panel", TalosLinuxPanel);
+if (!customElements.get("talos-linux-panel")) {
+  customElements.define("talos-linux-panel", TalosLinuxPanel);
+}

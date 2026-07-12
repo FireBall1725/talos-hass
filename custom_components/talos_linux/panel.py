@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from homeassistant.components import panel_custom
@@ -15,6 +16,22 @@ from .websocket_api import async_register_websocket_api
 PANEL_URL_PATH = "talos-linux"
 JS_URL = "/talos_linux_frontend/talos-panel.js"
 _JS_FILE = Path(__file__).parent / "frontend" / "talos-panel.js"
+
+
+def _version() -> str:
+    """Integration version, used to cache-bust the panel module URL.
+
+    The static file is served at a fixed path, so without a version query the
+    browser can hold a stale panel across updates even through a hard refresh.
+    Appending ?v=<version> makes every release a fresh URL.
+    """
+    try:
+        return json.loads((Path(__file__).parent / "manifest.json").read_text())["version"]
+    except Exception:  # noqa: BLE001
+        return "0"
+
+
+MODULE_URL = f"{JS_URL}?v={_version()}"
 
 
 async def async_register_panel(hass: HomeAssistant) -> None:
@@ -46,7 +63,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
             hass,
             frontend_url_path=PANEL_URL_PATH,
             webcomponent_name="talos-linux-panel",
-            module_url=JS_URL,
+            module_url=MODULE_URL,
             sidebar_title="Talos",
             sidebar_icon="mdi:server-network",
             require_admin=False,
