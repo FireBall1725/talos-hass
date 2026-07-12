@@ -68,7 +68,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
             sidebar_title="Talos",
             sidebar_icon="mdi:server-network",
             require_admin=False,
-            config={},
+            config={"version": _version()},
             embed_iframe=False,
         )
         data["panel_registered"] = True

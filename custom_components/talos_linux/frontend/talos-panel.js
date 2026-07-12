@@ -117,6 +117,7 @@ const STYLE = `
     cursor:pointer; margin-right:8px; --mdc-icon-size:24px; color:inherit; }
   :host([narrow]) .menu-btn { display:flex; }
   .topbar-title { margin:0; flex:1; font-size:20px; font-weight:400; }
+  .topbar-ver { font-size:14px; opacity:.7; margin-left:8px; font-variant-numeric:tabular-nums; }
   .content { flex:1; overflow-y:auto; overflow-x:hidden; }
   .wrap { padding:16px 24px; max-width:1600px; margin:0 auto;
     color:var(--primary-text-color); font-family:var(--paper-font-body1_-_font-family, sans-serif); }
@@ -204,12 +205,24 @@ class TalosLinuxPanel extends HTMLElement {
     this.toggleAttribute("narrow", !!v);
   }
 
+  // HA passes the panel_custom config here; we stash it in for the version.
+  set panel(panel) {
+    this._version = panel && panel.config ? panel.config.version : undefined;
+    this._applyVersion();
+  }
+
+  _applyVersion() {
+    const el = this.shadowRoot && this.shadowRoot.querySelector(".topbar-ver");
+    if (el) el.textContent = this._version ? "v" + this._version : "";
+  }
+
   connectedCallback() {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
       <div class="topbar">
         <div class="menu-btn" title="Open menu"><ha-icon icon="mdi:menu"></ha-icon></div>
         <h1 class="topbar-title">Talos</h1>
+        <span class="topbar-ver"></span>
       </div>
       <div class="content">
       <div class="wrap">
@@ -253,6 +266,7 @@ class TalosLinuxPanel extends HTMLElement {
       this._renderList();
     });
 
+    this._applyVersion();
     this._timer = setInterval(() => this._fetch(), REFRESH_MS);
     if (this._data) this._renderList();
   }
