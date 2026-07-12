@@ -31,6 +31,41 @@ async def test_node_data(hass, init_integration, admin_talosconfig) -> None:
     assert coordinator.data.cert_expires == datetime(2030, 1, 1, tzinfo=UTC)
 
 
+async def test_volumes_filtered_to_var_mnt(
+    hass, init_integration, admin_talosconfig, mock_client
+) -> None:
+    mock_client.mounts.return_value = [
+        {"filesystem": "/dev/sda5", "mounted_on": "/var", "size": 100, "available": 40},
+        {
+            "filesystem": "/dev/sdb1",
+            "mounted_on": "/var/mnt/longhorn-data",
+            "size": 200,
+            "available": 50,
+        },
+        # tmpfs under /var/mnt is not a real block device -> excluded.
+        {
+            "filesystem": "tmpfs",
+            "mounted_on": "/var/mnt/ram",
+            "size": 10,
+            "available": 10,
+        },
+        # kubelet pod bind mount (not under /var/mnt) -> excluded.
+        {
+            "filesystem": "/dev/sdc1",
+            "mounted_on": "/var/lib/kubelet/pods/x",
+            "size": 5,
+            "available": 1,
+        },
+    ]
+    entry = await init_integration(admin_talosconfig)
+    node = entry.runtime_data.coordinator.data.nodes["192.0.2.10"]
+    vols = {v["mounted_on"]: v for v in node.volumes}
+    assert set(vols) == {"/var/mnt/longhorn-data"}
+    assert vols["/var/mnt/longhorn-data"]["used_pct"] == pytest.approx(
+        (200 - 50) / 200 * 100, abs=0.1
+    )
+
+
 async def test_cpu_percent_after_second_cycle(
     hass, init_integration, admin_talosconfig, mock_client
 ) -> None:

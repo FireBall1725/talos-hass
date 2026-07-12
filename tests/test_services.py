@@ -12,6 +12,7 @@ from custom_components.talos_linux.const import (
     OPT_ALLOW_RESET,
     SERVICE_REBOOT_NODE,
     SERVICE_RESET_NODE,
+    SERVICE_SHUTDOWN_NODE,
 )
 from homeassistant.exceptions import ServiceValidationError
 
@@ -68,6 +69,27 @@ async def test_confirm_node_mismatch_blocks(
             blocking=True,
         )
     mock_client.reboot.assert_not_called()
+
+
+async def test_shutdown_blocked_when_destructive_off(
+    hass, init_integration, admin_talosconfig, mock_client
+) -> None:
+    entry = await init_integration(admin_talosconfig)
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN, SERVICE_SHUTDOWN_NODE, _call(entry), blocking=True
+        )
+    mock_client.shutdown.assert_not_called()
+
+
+async def test_shutdown_allowed_with_toggle_and_admin(
+    hass, init_integration, admin_talosconfig, mock_client
+) -> None:
+    entry = await init_integration(admin_talosconfig, {OPT_ALLOW_DESTRUCTIVE: True})
+    await hass.services.async_call(
+        DOMAIN, SERVICE_SHUTDOWN_NODE, _call(entry), blocking=True
+    )
+    mock_client.shutdown.assert_awaited_once()
 
 
 async def test_reset_blocked_without_reset_toggle(

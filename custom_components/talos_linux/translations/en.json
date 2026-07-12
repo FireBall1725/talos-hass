@@ -68,6 +68,59 @@
       }
     }
   },
+  "entity": {
+    "sensor": {
+      "version": { "name": "Talos version" },
+      "stage": {
+        "name": "Machine stage",
+        "state": {
+          "booting": "Booting",
+          "installing": "Installing",
+          "maintenance": "Maintenance",
+          "running": "Running",
+          "rebooting": "Rebooting",
+          "shuttingDown": "Shutting down",
+          "resetting": "Resetting",
+          "upgrading": "Upgrading"
+        }
+      },
+      "cpu": { "name": "CPU usage" },
+      "memory": { "name": "Memory usage" },
+      "disk": { "name": "System disk usage" },
+      "uptime": { "name": "Last boot" },
+      "schematic": { "name": "Schematic ID" },
+      "extension_count": { "name": "Extensions" },
+      "arch": { "name": "Architecture" },
+      "platform": { "name": "Platform" },
+      "node_count": { "name": "Nodes" },
+      "controlplane_count": { "name": "Control-plane nodes" },
+      "version_spread": { "name": "Talos version spread" },
+      "latest_version": { "name": "Latest Talos release" },
+      "cert_expires": { "name": "Client certificate expiry" }
+    },
+    "binary_sensor": {
+      "online": { "name": "Reachable" },
+      "ready": { "name": "Ready" }
+    },
+    "update": {
+      "os": { "name": "Talos OS" }
+    },
+    "button": {
+      "reboot": { "name": "Reboot" },
+      "shutdown": { "name": "Shut down" },
+      "refresh": { "name": "Refresh" }
+    }
+  },
+  "issues": {
+    "cert_expiring": {
+      "title": "Talos client certificate expiring",
+      "description": "The Talos client certificate for {cluster} expires on {date}. Re-authenticate the integration with a fresh talosconfig to keep access before it lapses."
+    },
+    "missing_dependency": {
+      "title": "Talos dependency missing",
+      "description": "A required Python dependency could not be imported, so the Talos integration cannot start. Reinstalling the integration usually restores it; check the Home Assistant log for the missing module."
+    }
+  },
   "services": {
     "refresh": {
       "name": "Refresh",
@@ -112,6 +165,24 @@
         "mode": {
           "name": "Mode",
           "description": "Reboot mode."
+        }
+      }
+    },
+    "shutdown_node": {
+      "name": "Shut down node",
+      "description": "Power off a single Talos node. Requires destructive operations to be enabled.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Cluster",
+          "description": "The Talos cluster the node belongs to."
+        },
+        "node": {
+          "name": "Node",
+          "description": "Node address to shut down."
+        },
+        "confirm_node": {
+          "name": "Confirm node",
+          "description": "Repeat the node address to confirm."
         }
       }
     },

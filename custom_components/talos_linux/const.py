@@ -80,6 +80,13 @@ SCHEMATIC_EXTENSION_NAME: Final = "schematic"
 # disk). Used for the system-disk usage sensor.
 SYSTEM_DISK_MOUNT: Final = "/var"
 
+# Talos user/data volumes (extra disks, Longhorn data, etc.) mount under this
+# prefix. Each such block-device mount is surfaced as its own disk sensor.
+# Restricting to this prefix avoids the pod/kubelet bind-mount noise that would
+# appear if every /dev-backed mount were surfaced on a Kubernetes node.
+VOLUME_MOUNT_PREFIX: Final = "/var/mnt/"
+VOLUME_DEVICE_PREFIX: Final = "/dev/"
+
 # --- Upgrade image construction ---------------------------------------------
 # factory.talos.dev/installer/<schematic-id>:<version>
 FACTORY_INSTALLER_BASE: Final = "factory.talos.dev/installer"
@@ -90,10 +97,17 @@ GITHUB_RELEASES_URL: Final = (
 )
 GITHUB_RELEASE_TAG_URL: Final = "https://github.com/siderolabs/talos/releases/tag/{tag}"
 
+# --- Repairs ----------------------------------------------------------------
+# Warn this many days before the client certificate's not_after.
+CERT_EXPIRY_WARN_DAYS: Final = 30
+ISSUE_CERT_EXPIRING: Final = "cert_expiring"
+ISSUE_MISSING_DEPENDENCY: Final = "missing_dependency"
+
 # --- Services ---------------------------------------------------------------
 SERVICE_REFRESH: Final = "refresh"
 SERVICE_GET_SERVICE_STATUS: Final = "get_service_status"
 SERVICE_REBOOT_NODE: Final = "reboot_node"
+SERVICE_SHUTDOWN_NODE: Final = "shutdown_node"
 SERVICE_UPGRADE_NODE: Final = "upgrade_node"
 SERVICE_APPLY_CONFIG: Final = "apply_config"
 SERVICE_RESET_NODE: Final = "reset_node"

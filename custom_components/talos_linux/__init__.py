@@ -8,10 +8,17 @@ from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from .client import TalosClient, TalosDependencyError
-from .const import CONF_ENDPOINT, CONF_PORT, CONF_TALOSCONFIG, DOMAIN
+from .const import (
+    CONF_ENDPOINT,
+    CONF_PORT,
+    CONF_TALOSCONFIG,
+    DOMAIN,
+    ISSUE_MISSING_DEPENDENCY,
+)
 from .coordinator import TalosCoordinator
 from .panel import async_register_panel, async_unregister_panel
 from .services import async_setup_services, async_unload_services
@@ -20,6 +27,7 @@ from .talosconfig import TalosConfigError, parse_talosconfig
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.UPDATE,
 ]
 
@@ -47,7 +55,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: TalosConfigEntry) -> boo
     try:
         await client.connect()
     except TalosDependencyError as err:
+        # A missing Python dependency is environment-wide, not per-cluster, so
+        # surface it as a repair issue in addition to failing this entry.
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            ISSUE_MISSING_DEPENDENCY,
+            is_fixable=False,
+            severity=ir.IssueSeverity.ERROR,
+            translation_key=ISSUE_MISSING_DEPENDENCY,
+        )
         raise ConfigEntryError(str(err)) from err
+    ir.async_delete_issue(hass, DOMAIN, ISSUE_MISSING_DEPENDENCY)
 
     coordinator = TalosCoordinator(hass, entry, client, creds, endpoint)
     await coordinator.async_config_entry_first_refresh()

@@ -42,6 +42,24 @@ reboot_node:
         select:
           options: [DEFAULT, POWERCYCLE, FORCE]
 
+shutdown_node:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: talos_linux
+    node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+    confirm_node:
+      required: true
+      example: 192.0.2.10
+      selector:
+        text:
+
 upgrade_node:
   fields:
     config_entry_id:

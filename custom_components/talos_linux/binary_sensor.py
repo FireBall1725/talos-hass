@@ -28,13 +28,13 @@ class TalosBinarySensorDescription(BinarySensorEntityDescription):
 NODE_BINARY_SENSORS: tuple[TalosBinarySensorDescription, ...] = (
     TalosBinarySensorDescription(
         key="online",
-        name="Reachable",
+        translation_key="online",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         value_fn=lambda n: n.online,
     ),
     TalosBinarySensorDescription(
         key="ready",
-        name="Ready",
+        translation_key="ready",
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=lambda n: n.ready,
     ),

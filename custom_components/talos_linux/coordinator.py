@@ -19,22 +19,27 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .client import TalosAuthError, TalosClient, TalosError
 from .const import (
+    CERT_EXPIRY_WARN_DAYS,
     DEFAULT_STATE_INTERVAL,
     DEFAULT_UPGRADE_INTERVAL,
     DOMAIN,
     GITHUB_RELEASES_URL,
+    ISSUE_CERT_EXPIRING,
     OPT_PINNED_VERSION,
     OPT_STATE_INTERVAL,
     OPT_UPGRADE_INTERVAL,
     OPT_UPGRADE_MODE,
     SYSTEM_DISK_MOUNT,
     UPGRADE_MODE_PINNED,
+    VOLUME_DEVICE_PREFIX,
+    VOLUME_MOUNT_PREFIX,
 )
 from .talosconfig import TalosCredentials
 
@@ -66,6 +71,8 @@ class NodeData:
     extensions: list[dict[str, Any]] = field(default_factory=list)
     services: list[dict[str, Any]] = field(default_factory=list)
     etcd_members: list[dict[str, Any]] = field(default_factory=list)
+    # Per-mount usage for Talos user/data volumes (see _volumes).
+    volumes: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -142,6 +149,7 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
         if self._discovery_complete:
             self._prune_stale_devices(set(node_map))
 
+        self._update_cert_issue()
         latest = await self._maybe_check_latest()
         return TalosData(
             nodes=node_map,
@@ -149,6 +157,30 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
             target_version=self._target_version(latest),
             cert_expires=self.creds.not_after,
         )
+
+    def _update_cert_issue(self) -> None:
+        """Raise or clear a repair issue as the client cert nears expiry."""
+        issue_id = f"{ISSUE_CERT_EXPIRING}_{self.entry.entry_id}"
+        not_after = self.creds.not_after
+        near_expiry = (
+            not_after is not None
+            and not_after - dt_util.utcnow() < timedelta(days=CERT_EXPIRY_WARN_DAYS)
+        )
+        if near_expiry:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key=ISSUE_CERT_EXPIRING,
+                translation_placeholders={
+                    "cluster": self.entry.title,
+                    "date": not_after.strftime("%Y-%m-%d"),  # type: ignore[union-attr]
+                },
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     async def _discover_nodes(self) -> list[dict[str, Any]]:
         """Discover the node set, falling back to configured endpoints."""
@@ -225,6 +257,7 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
 
         if not isinstance(mounts, Exception):
             data.disk_used_pct = self._disk_percent(mounts)
+            data.volumes = self._volumes(mounts)
 
         if not isinstance(status, Exception):
             data.stage = status["stage"]
@@ -261,6 +294,37 @@ class TalosCoordinator(DataUpdateCoordinator[TalosData]):
                 used = mount["size"] - mount["available"]
                 return round(used / mount["size"] * 100, 1)
         return None
+
+    def _volumes(self, mounts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Per-mount usage for Talos user/data volumes under /var/mnt.
+
+        One entry per block-device mount below VOLUME_MOUNT_PREFIX, deduped by
+        mount point (the first wins). Sorted by mount point for stable ordering.
+        """
+        seen: set[str] = set()
+        out: list[dict[str, Any]] = []
+        for mount in mounts:
+            mounted_on = mount["mounted_on"]
+            if mounted_on in seen:
+                continue
+            if not mounted_on.startswith(VOLUME_MOUNT_PREFIX):
+                continue
+            if not mount["filesystem"].startswith(VOLUME_DEVICE_PREFIX):
+                continue
+            if not mount["size"]:
+                continue
+            seen.add(mounted_on)
+            used = mount["size"] - mount["available"]
+            out.append(
+                {
+                    "mounted_on": mounted_on,
+                    "filesystem": mount["filesystem"],
+                    "size": mount["size"],
+                    "available": mount["available"],
+                    "used_pct": round(used / mount["size"] * 100, 1),
+                }
+            )
+        return sorted(out, key=lambda v: v["mounted_on"])
 
     async def _maybe_check_latest(self) -> str | None:
         """Fetch the latest Talos release, throttled to the upgrade interval."""

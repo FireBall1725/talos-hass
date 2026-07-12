@@ -47,7 +47,7 @@ async def async_setup_entry(
 class TalosUpdateEntity(TalosNodeEntity, UpdateEntity):
     """Talos OS version + schematic-aware upgrade for one node."""
 
-    _attr_name = "Talos OS"
+    _attr_translation_key = "os"
     _attr_device_class = UpdateDeviceClass.FIRMWARE
 
     def __init__(self, coordinator, entry, address) -> None:

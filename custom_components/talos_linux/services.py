@@ -2,8 +2,8 @@
 
 Tiers:
   0  refresh, get_service_status        always available (reads / no-op)
-  1  reboot_node, upgrade_node, apply_config   needs allow_destructive + a
-                                               write-capable cert role
+  1  reboot_node, shutdown_node,        needs allow_destructive + a
+     upgrade_node, apply_config         write-capable cert role
   2  reset_node                         needs allow_reset + an admin cert role
 
 Every tier-1/2 call must pass confirm_node matching node, and an explicit
@@ -45,6 +45,7 @@ from .const import (
     SERVICE_REBOOT_NODE,
     SERVICE_REFRESH,
     SERVICE_RESET_NODE,
+    SERVICE_SHUTDOWN_NODE,
     SERVICE_UPGRADE_NODE,
 )
 
@@ -64,6 +65,7 @@ REBOOT_SCHEMA = vol.Schema(
         ),
     }
 )
+SHUTDOWN_SCHEMA = vol.Schema(_NODE_WRITE)
 UPGRADE_SCHEMA = vol.Schema({**_NODE_WRITE, vol.Optional(ATTR_VERSION): cv.string})
 APPLY_SCHEMA = vol.Schema(
     {
@@ -153,6 +155,17 @@ async def _async_reboot(call: ServiceCall) -> None:
     await coordinator.async_request_refresh()
 
 
+async def _async_shutdown(call: ServiceCall) -> None:
+    entry, coordinator, client = _resolve(call)
+    _require_destructive(entry, coordinator)
+    node = _target_node(call, coordinator, confirm=True)
+    try:
+        await client.shutdown(node)
+    except TalosError as err:
+        raise HomeAssistantError(f"Shutdown failed: {err}") from err
+    await coordinator.async_request_refresh()
+
+
 async def _async_upgrade(call: ServiceCall) -> None:
     entry, coordinator, client = _resolve(call)
     _require_destructive(entry, coordinator)
@@ -218,6 +231,9 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_REBOOT_NODE, _async_reboot, REBOOT_SCHEMA
     )
     hass.services.async_register(
+        DOMAIN, SERVICE_SHUTDOWN_NODE, _async_shutdown, SHUTDOWN_SCHEMA
+    )
+    hass.services.async_register(
         DOMAIN, SERVICE_UPGRADE_NODE, _async_upgrade, UPGRADE_SCHEMA
     )
     hass.services.async_register(
@@ -233,6 +249,7 @@ def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_REFRESH,
         SERVICE_GET_SERVICE_STATUS,
         SERVICE_REBOOT_NODE,
+        SERVICE_SHUTDOWN_NODE,
         SERVICE_UPGRADE_NODE,
         SERVICE_APPLY_CONFIG,
         SERVICE_RESET_NODE,
