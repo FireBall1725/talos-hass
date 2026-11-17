@@ -2,7 +2,7 @@
   "domain": "talos_linux",
   "name": "Talos Linux",
   "after_dependencies": ["http", "frontend", "panel_custom", "websocket_api"],
-  "codeowners": ["@FireBall1725", "@ejstacey"],
+  "codeowners": ["@FireBall1725"],
   "config_flow": true,
   "documentation": "https://github.com/fireball1725/talos-hass",
   "integration_type": "hub",
